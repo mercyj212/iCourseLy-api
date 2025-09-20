@@ -23,7 +23,7 @@ const generateRefreshToken = (user) => {
 // REGISTER
 exports.register = async (req, res) => {
     try {
-        const { username, email, password, role } = req.body;
+        const { userName, email, password, role } = req.body;
 
         // Check if user exists
         const existingUser = await User.findOne({ email });
@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create user
-        const user = await User.create({ username, email, password: hashedPassword, role});
+        const user = await User.create({ userName, email, password: hashedPassword, role});
 
         // Generate token
         const accessToken = generateAccessToken(user);

@@ -11,4 +11,4 @@ const lessonsSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-module.exports = mongoose.model('Lessons', lessonsSchema);
+module.exports = mongoose.model('Lesson', lessonsSchema);

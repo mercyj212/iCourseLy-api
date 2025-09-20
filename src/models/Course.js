@@ -8,6 +8,7 @@ const courseSchema = new mongoose.Schema({
     price:{ type: Number, required: true },
     coverImage: { url: String, public_id: String },
     instructorId:{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
     isPublished: { type: Boolean, required: true },
 
 }, { timestamps: true });
