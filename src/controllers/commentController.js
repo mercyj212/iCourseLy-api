@@ -1,5 +1,5 @@
 const comment = require('../models/Comment');
-const Lesson = require('../models/Lessons');
+const Lesson = require('../models/Lesson');
 
 exports.addComment = async (req, res) => {
     try {
