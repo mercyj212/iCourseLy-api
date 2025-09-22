@@ -5,7 +5,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // Enroll in a course
-route.post('/:courseId', authMiddleware, enrollCourse);
+router.post('/:courseId', authMiddleware, enrollCourse);
 
 // Get all courses a user is enrolled in
 router.get('/', authMiddleware, getEnrollments);

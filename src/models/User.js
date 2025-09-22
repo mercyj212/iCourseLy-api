@@ -5,17 +5,17 @@ const userSchema = new mongoose.Schema({
     userName: { 
         type: String, 
         required: [true, 'Please add a name'],
-        },
+    },
 
-    email:{ 
+    email: { 
         type: String, 
         required: [true, 'Please add an email'], 
-        unique: true , 
+        unique: true, 
         lowercase: true, 
         trim: true
     },
 
-    password:{ 
+    password: { 
         type: String, 
         required: [true, 'Please add a password'],
     },
@@ -26,8 +26,16 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: 'student',
     },
-    //avatar:{ url: String, required: true },
 
+    // Track enrolled courses
+    enrolledCourses: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Course'
+        }
+    ],
+
+    //avatar: { url: String, required: true },
 }, { timestamps: true });
 
 // Encrypt password before saving

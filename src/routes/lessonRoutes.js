@@ -1,14 +1,14 @@
 const express = require('express');
-const { createLesson, getLessonByCourse, getLessonById, updateLesson, deleteLesson } = require('../controllers/lessonController');
+const { createLesson, getLessonsByCourse, getLessonById, updateLesson, deleteLesson } = require('../controllers/lessonController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // Create a new lesson
-route.post('/', authMiddleware, createLesson);
+router.post('/', authMiddleware, createLesson);
 
 // Get all lessons for a course
-router.get('/course/:id', getLessonByCourse);
+router.get('/course/:id', getLessonsByCourse);
 
 // Get single lesson
 router.get('/:id', getLessonById);
