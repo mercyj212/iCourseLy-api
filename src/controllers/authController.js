@@ -30,11 +30,12 @@ const generateRefreshToken = (user) => {
  * Expects: { name, email, password, role? }
  */
 exports.registerUser = async (req, res) => {
+  console.log('req.body:', req.body);
   try {
-    const { name, email, password, role } = req.body;
+    const { userName, email, password, role } = req.body;
 
     // basic validation
-    if (!name || !email || !password) {
+    if (!userName || !email || !password) {
       return res.status(400).json({ message: 'Please provide name, email and password' });
     }
 
@@ -42,7 +43,7 @@ exports.registerUser = async (req, res) => {
     if (existing) return res.status(400).json({ message: 'User already exists' });
 
     // Create user (assumes User model hashes password in a pre-save hook)
-    const user = new User({ name, email, password, role });
+    const user = new User({ userName, email, password, role });
     await user.save();
 
     // generate tokens
