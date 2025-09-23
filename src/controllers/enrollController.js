@@ -1,11 +1,13 @@
-const Course = require('../models/Course');
-const User = require('../models/User');
-
-// Enroll a user into a course
 exports.enrollCourse = async (req, res) => {
   try {
-    const { courseId } = req.params; // comes from route param
     const userId = req.user.id;
+
+    // Only students can enroll
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students can enroll in courses' });
+    }
+
+    const { courseId } = req.params;
 
     // Find course
     const course = await Course.findById(courseId);
@@ -40,15 +42,11 @@ exports.enrollCourse = async (req, res) => {
   }
 };
 
-// Get all courses a user is enrolled in
 exports.getEnrollments = async (req, res) => {
   try {
     const userId = req.user.id;
-
     const user = await User.findById(userId).populate('enrolledCourses');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.json(user.enrolledCourses);
   } catch (error) {

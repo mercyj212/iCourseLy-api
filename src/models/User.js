@@ -35,6 +35,14 @@ const userSchema = new mongoose.Schema({
         }
     ],
 
+    // Show instructor created courses
+    createdCourses: [
+        { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'Course'
+        }
+    ]
+
     //avatar: { url: String, required: true },
 }, { timestamps: true });
 
