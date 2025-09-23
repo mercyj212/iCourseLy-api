@@ -1,0 +1,90 @@
+const User = require('../models/User');
+const Course = require('../models/Course');
+
+// Get all users
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().select('-password');
+        res.json(users);
+    } catch (err) {
+        console.error('getAllUsers error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Get all courses for admin with instructor info
+exports.getAllCourseAdmin = async (req, res) => {
+    try {
+        const courses = await Course.find()
+            .populate('ínstructorId', 'userName email role')
+            .sort({ createdAt: -1 });
+        res.json(courses);
+    } catch (err) {
+        console.error('getAllCoursesAdmin error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Delete any course
+exports.deleteCourseAdmin = async (req, res) => {
+    try {
+        const course = await Course.findById(req.params,id);
+        if (!course) return res.status(404).json({ message: 'Course not found' });
+
+        await course.deleteOne();
+
+        // Remove from instructor's createdCourses
+        const instructor = await User.findById(course.instructorId);
+        if (instructor) {
+            instructor.createdCourses = instructor.createdCourses.filter(
+                cld => cld.toString() !== course._id.toString()
+            );
+            await instructor.save();
+        }
+
+        res.json({ message: 'Course deleted successfully' });
+    } catch (err) {
+        console.error('deleteCourseAdmin error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Approve a course
+exports.approveCourse = async (req, res) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ message: 'Course not found' });
+
+        course.isApproved = true;
+        await course.save();
+
+        res.json({ message: 'Course approved successfully', course });
+    } catch (err) {
+        console.error('approveCourse error:', err);
+        res.status(500).json({ message: 'Server error'});
+    }
+};
+
+// Dashboard analytics 
+exports.getAnalytics = async (req, res) => {
+    try {
+       const totalUsers = await User.countDocuments();
+       const totalInstructors = await User.countDocuments({ role: 'instructor' });
+       const totalStudents = await User.countDocuments({ role: 'student' });
+       const totalCourses = await Course.countDocuments();
+       const publishedCourses = await Course.countDocuments({ isPublished: true });
+       const approvedCourses = await Course.countDocuments({ isApproved: true });
+
+       res.json({
+        totalUsers,
+        totalInstructors,
+        totalStudents,
+        totalCourses,
+        publishedCourses,
+        approvedCourses
+       });
+    } catch (err) {
+        console.error('getAnalytics error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
