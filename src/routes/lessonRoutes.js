@@ -28,15 +28,39 @@ router.post(
 );
 
 // Get all lessons for a course
-router.get('/course/:id', getLessonsByCourse);
+router.get(
+    '/course/:id',
+    [param('courseId').isMongoId().withMessage('Invalid course ID') ],
+    validateRequest, 
+    getLessonsByCourse
+);
 
 // Get single lesson
-router.get('/:id', getLessonById);
+router.get(
+    '/:id', 
+    param('lessonId').isMongoId().withMessage('Invalid lesson ID'),
+    validateRequest, 
+    getLessonById
+);
 
 // Update lesson
-router.put('/:id', authMiddleware, roleMiddleware('instructor'), updateLesson);
+router.put(
+    '/:id', 
+    authMiddleware, 
+    roleMiddleware('instructor'), 
+    [ param('lessonId').isMongoId().withMessage('Invalid lesson ID')],
+    validateRequest,
+    updateLesson
+);
 
-// Delete a course
-router.delete('/:id', authMiddleware, roleMiddleware('instructor'), deleteLesson);
+// Delete a lesson
+router.delete(
+    '/:id', 
+    authMiddleware, 
+    roleMiddleware('instructor'),
+    param('lessonId').isMongoId().withMessage('Invalid lesson ID'),
+    validateRequest, 
+    deleteLesson
+);
 
 module.exports = router;

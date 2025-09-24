@@ -1,4 +1,5 @@
 const express = require('express');
+const { body, param } = require('express-validator');
 const { 
     getAllUsers,
     getAllCoursesAdmin,
@@ -10,6 +11,7 @@ const {
 } = require('../controllers/adminController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const validateRequest = require('../middleware/validateRequestMiddleware');
 
 const router = express.Router();
 
@@ -20,8 +22,22 @@ router.get('/users', authMiddleware, roleMiddleware('admin'), getAllUsers);
 
 // Courses Management
 router.get('/courses', authMiddleware, roleMiddleware('admin'), getAllCoursesAdmin);
-router.delete('/courses/:id', authMiddleware, roleMiddleware('admin'), deleteCourseAdmin);
-router.put('/courses/:id/approve', authMiddleware, roleMiddleware('admin'), approveCourse);
+
+router.delete(
+    '/courses/:id',
+     authMiddleware, 
+     roleMiddleware('admin'), 
+     [ param('lessonId').isMongoId().withMessage('Invalid lesson ID')],
+     validateRequest,
+     deleteCourseAdmin);
+
+router.put(
+    '/courses/:id/approve', 
+    authMiddleware, 
+    roleMiddleware('admin'),
+    [ param('lessonId').isMongoId().withMessage('Invalid lesson ID')],
+    validateRequest,
+     approveCourse);
 
 // Dashboard analytics
 router.get('/analytics', authMiddleware, roleMiddleware('admin'), getAnalytics);
