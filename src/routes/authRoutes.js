@@ -1,4 +1,5 @@
 const express = require('express');
+const { body } = require('express-validator');
 const {
   registerUser,
   loginUser,
@@ -6,14 +7,37 @@ const {
   getUserProfile
 } = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
+const validateRequest = require('../middleware/validateRequestMiddleware');
 
 const router = express.Router();
 
 // Register
-router.post('/register', registerUser);
+router.post(
+  '/register', 
+  [
+    body('userName').notEmpty().withMessage('Username is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password')
+      .isLength({ min: 6 })
+      .withMessage('Password must be at least 6 characters'),
+    body('role')
+      .optional()
+      .isIn(['student', 'instructor', 'admin'])
+      .withMessage('Invalid role')
+],
+validateRequest, 
+registerUser
+);
 
 // Login
-router.post('/login', loginUser);
+router.post(
+  '/login',
+  [
+    body('email').isEmail().withMessage('Valid email required'),
+    body('password').notEmpty().withMessage('Password is required')
+  ],
+  validateRequest,
+  loginUser);
 
 // Refresh access token
 router.post('/refresh-token', refreshToken);

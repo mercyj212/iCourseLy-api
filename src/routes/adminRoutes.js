@@ -4,14 +4,18 @@ const {
     getAllCoursesAdmin,
     deleteCourseAdmin,
     approveCourse,
-    getAnalytics
+    getAnalytics,
+    updateUserRole,
+    deleteUser
 } = require('../controllers/adminController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-// Users Management
+// User Management
+router.put('/users/:id/role', authMiddleware, roleMiddleware('admin'), updateUserRole);
+router.delete('/users/:id', authMiddleware, roleMiddleware('admin'), deleteUser);
 router.get('/users', authMiddleware, roleMiddleware('admin'), getAllUsers);
 
 // Courses Management

@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
 
     role: { 
         type: String,
-        enum: ['student', 'instructor'], 
+        enum: ['student', 'instructor', 'admin'], 
         required: true,
         default: 'student',
     },
@@ -41,7 +41,12 @@ const userSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId, 
             ref: 'Course'
         }
-    ]
+    ],
+
+    isApproved: {
+        type: Boolean,
+        default: false
+    }
 
     //avatar: { url: String, required: true },
 }, { timestamps: true });

@@ -13,7 +13,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // Get all courses for admin with instructor info
-exports.getAllCourseAdmin = async (req, res) => {
+exports.getAllCoursesAdmin = async (req, res) => {
     try {
         const courses = await Course.find()
             .populate('ínstructorId', 'userName email role')
@@ -85,6 +85,52 @@ exports.getAnalytics = async (req, res) => {
        });
     } catch (err) {
         console.error('getAnalytics error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Update user role (Admin only)
+exports.updateUserRole = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { role } = req.body;
+
+        // Only allow valid roles
+        if (!['student', 'instuctor', 'admin' ].includes(role)) {
+            return res.status(400).json({ message: 'Invalid role' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { role },
+            { new: true, runValidators: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User role updated successfully', user });
+    } catch (error) {
+        console.error('updateUserRole error:', error);
+        res.status(500).json({ message: 'Server error'});
+    }
+};
+
+// Delete a user
+exports.deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await User.findByIdAndDelete(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('deleteUser error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
