@@ -10,6 +10,7 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const validateRequest = require('../middleware/validateRequestMiddleware');
+const uploadMiddleware = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
 
@@ -18,12 +19,7 @@ router.post(
     '/', 
     authMiddleware, 
     roleMiddleware('instructor'),
-    // [
-        // param('').isMongoId().withMessage('Invalid lesson ID'),
-        // body('title').notEmpty().withMessage('Lesson title is required'),
-        // body('description').notEmpty().withMessage('Lesson description is required')
-    // ],
-    // validateRequest,
+    uploadMiddleware.single('video'),
     createLesson
 );
 
@@ -47,7 +43,8 @@ router.get(
 router.put(
     '/:id', 
     authMiddleware, 
-    roleMiddleware('instructor'), 
+    roleMiddleware('instructor'),
+    uploadMiddleware.single('video'),
     [ param('id').isMongoId().withMessage('Invalid lesson ID')],
     validateRequest,
     updateLesson

@@ -4,8 +4,18 @@ const User = require('../models/User');
 // CREATE a new course
 exports.createCourse = async (req, res) => {
     try {
-        const { title, description, category, price, coverImage, isPublished } = req.body;
+        const { title, description, category, price, isPublished } = req.body;
         const instructorId = req.user.id;
+
+        
+        // Handle coverImage from Cloudinary if uploaded
+        let coverImage = null;
+        if (req.file) {
+            coverImage = {
+                url: req.file.path,
+                public_id: req.file.filename,
+            };
+        }
         
         const course = await Course.create({
             title,
@@ -22,7 +32,7 @@ exports.createCourse = async (req, res) => {
             const instructor = await User.findById(req.user.id);
             instructor.createdCourses.push(course._id);
             await instructor.save();
-        }
+        };
 
         res.status(201).json(course);
     } catch (error) {
@@ -77,6 +87,14 @@ exports.updateCourse = async (req, res) => {
         course.price = price || course.price;
         course.coverImage = coverImage || course.coverImage;
         course.isPublished = isPublished ?? course.isPublished;
+
+        // If new coverImage uploaded, replace old one
+        if (req.file) {
+            course.coverImage = {
+                url: req.file.path,
+                public_id: req.file.filename,
+            };
+        }
 
         await course.save();
         res.json(course);

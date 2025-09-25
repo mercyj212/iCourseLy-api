@@ -11,6 +11,7 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const validateRequest = require('../middleware/validateRequestMiddleware');
+const uploadMiddleware = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
 
@@ -18,7 +19,8 @@ const router = express.Router();
 router.post(
     '/', 
     authMiddleware, 
-    roleMiddleware('instructor'), 
+    roleMiddleware('instructor'),
+    uploadMiddleware.single('coverImage'), 
     [
         body('title').notEmpty().withMessage('Course title is required'),
         body('description').isLength({ min: 10}).withMessage('Description  is too short'),
@@ -42,7 +44,8 @@ router.get('/:id', getCourseById);
 router.put(
     '/:id',
      authMiddleware, 
-     roleMiddleware('instructor'), 
+     roleMiddleware('instructor'),
+     uploadMiddleware.single('coverImage'), 
      [
         param('id').isMongoId().withMessage('Invalid course ID')
      ],
