@@ -6,7 +6,8 @@ const {
   refreshToken,
   getUserProfile,
   verifyEmail,
-  forgotPassword
+  forgotPassword,
+  resetPassword
 } = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const validateRequest = require('../middleware/validateRequestMiddleware');
@@ -56,9 +57,9 @@ router.post(
   // Reset Password
    router.post(
     '/reset-password/:token',
-    [body('email').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')],
-    validateRequest,
-    forgotPassword
+    // [body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')],
+    // validateRequest,
+    resetPassword
   );
 
 // Refresh access token

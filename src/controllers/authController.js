@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const sendEmail = require('../utils/sendEmail');
 
 // TOKEN HELPERS 
 
@@ -31,12 +32,25 @@ exports.registerUser = async (req, res) => {
     // Email verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
     user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
-    user.emailVerificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    user.emailVerificationTokenExpires = Date.now() + parseInt(process.env.EMAIL_TOKEN_EXPIRES || 86400000) // default 24h
 
     await user.save();
 
     // Normally send email here with the URL
     const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
+
+    // Send verification email
+    await sendEmail({
+      to: email,
+      subject: "Verify Your Email",
+      html: `
+        <h2>Welcome to iCourseLy</h2>
+        <p>Hi ${userName},</p>
+        <p>Thanks for signing up! Please verify your email by clicking the link below:</p>
+        <a href="${verificationUrl}" target="_blank">Verify Email</a>
+        <p>This link will expire in 24 hours.</p>
+      `,
+    });
     
     res.status(201).json({
       message: 'User registered successfully. Please verify your email.',
@@ -116,7 +130,7 @@ exports.forgotPassword = async (req, res) => {
 
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.passwordResetTokenExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    user.passwordResetTokenExpires = Date.now() + parseInt(process.env.PASSWORD_RESET_TOKEN_EXPIRES || 3600000); // default 1h
 
     await user.save();
 
@@ -133,22 +147,38 @@ exports.forgotPassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const { token } = req.params;
+    const { password } = req.body;
+
+    // 1. Validate request
+    if (!token) return res.status(400).json({ message: 'Reset token is required in URL' });
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    // 2. Hash token to match DB
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // 3. Find user by hashed token and check expiration
     const user = await User.findOne({
       passwordResetToken: hashedToken,
       passwordResetTokenExpires: { $gt: Date.now() }
     });
-    if (!user) return res.status(400).json({ message: 'Invalid or expired token' });
 
-    user.password = req.body.password;
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token. Please request a new password reset.' });
+    }
+
+    // 4. Update password and clear token fields
+    user.password = password;
     user.passwordResetToken = undefined;
     user.passwordResetTokenExpires = undefined;
     await user.save();
 
-    res.json({ message: 'Password reset successfully' });
+    res.json({ message: 'Password reset successfully. You can now log in with your new password.' });
   } catch (err) {
     console.error('resetPassword error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Server error while resetting password' });
   }
 };
 
