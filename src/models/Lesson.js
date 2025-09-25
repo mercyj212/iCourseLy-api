@@ -7,10 +7,10 @@ const lessonsSchema = new mongoose.Schema({
    video: {
         url: { type: String, required: true }
     },
-    videoLink: {
-        url: { type: String, required: true }
+     videoLink: {
+         url: { type: String, required: true }
     },
-
+    resources: { type: String},
     duration:{ type: String, required: true },
     isPublished: { type: Boolean, required: true },
 

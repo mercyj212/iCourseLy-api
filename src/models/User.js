@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema({
         type: String, 
         required: [true, 'Please add a name'],
     },
-
     email: { 
         type: String, 
         required: [true, 'Please add an email'], 
@@ -14,12 +13,10 @@ const userSchema = new mongoose.Schema({
         lowercase: true, 
         trim: true
     },
-
     password: { 
         type: String, 
         required: [true, 'Please add a password'],
     },
-
     role: { 
         type: String,
         enum: ['student', 'instructor', 'admin'], 
@@ -43,12 +40,24 @@ const userSchema = new mongoose.Schema({
         }
     ],
 
+    // Admin approval for instructors
     isApproved: {
         type: Boolean,
         default: false
-    }
+    },
 
-    //avatar: { url: String, required: true },
+    // Email verification fields
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationToken: String,
+    emailVerificationTokenExpires: Date,
+
+    // Password reset fields
+    passwordResetToken: String,
+    passwordResetTokenExpires: Date
+
 }, { timestamps: true });
 
 // Encrypt password before saving

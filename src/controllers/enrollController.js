@@ -1,5 +1,11 @@
+const { validationResult } = require('express-validator');
+const Course = require('../models/Course');
+const User = require('../models/User');
+
 exports.enrollCourse = async (req, res) => {
   try {
+
+    
     const userId = req.user.id;
 
     // Only students can enroll

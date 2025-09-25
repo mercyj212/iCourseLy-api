@@ -10,9 +10,7 @@ const router = express.Router();
 router.post(
     '/:courseId',
      authMiddleware, 
-     [ param('courseId').isMongoId().withMessage('Invalid course ID')
-
-     ],
+     [ param('courseId').isMongoId().withMessage('Invalid course ID')],
      validateRequest,
      enrollCourse
     );

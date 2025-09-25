@@ -18,19 +18,19 @@ router.post(
     '/', 
     authMiddleware, 
     roleMiddleware('instructor'),
-    [
-        param('courseId').isMongoId().withMessage('Invalid course ID'),
-        body('title').notEmpty().withMessage('Lesson title is required'),
-        body('content').notEmpty().withMessage('Lesson content is required')
-    ],
-    validateRequest,
+    // [
+        // param('').isMongoId().withMessage('Invalid lesson ID'),
+        // body('title').notEmpty().withMessage('Lesson title is required'),
+        // body('description').notEmpty().withMessage('Lesson description is required')
+    // ],
+    // validateRequest,
     createLesson
 );
 
 // Get all lessons for a course
 router.get(
     '/course/:id',
-    [param('courseId').isMongoId().withMessage('Invalid course ID') ],
+    [param('id').isMongoId().withMessage('Invalid lesson ID') ],
     validateRequest, 
     getLessonsByCourse
 );
@@ -38,7 +38,7 @@ router.get(
 // Get single lesson
 router.get(
     '/:id', 
-    param('lessonId').isMongoId().withMessage('Invalid lesson ID'),
+    param('id').isMongoId().withMessage('Invalid lesson ID'),
     validateRequest, 
     getLessonById
 );
@@ -48,7 +48,7 @@ router.put(
     '/:id', 
     authMiddleware, 
     roleMiddleware('instructor'), 
-    [ param('lessonId').isMongoId().withMessage('Invalid lesson ID')],
+    [ param('id').isMongoId().withMessage('Invalid lesson ID')],
     validateRequest,
     updateLesson
 );
@@ -58,7 +58,7 @@ router.delete(
     '/:id', 
     authMiddleware, 
     roleMiddleware('instructor'),
-    param('lessonId').isMongoId().withMessage('Invalid lesson ID'),
+    param('id').isMongoId().withMessage('Invalid lesson ID'),
     validateRequest, 
     deleteLesson
 );

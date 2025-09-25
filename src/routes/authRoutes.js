@@ -4,7 +4,9 @@ const {
   registerUser,
   loginUser,
   refreshToken,
-  getUserProfile
+  getUserProfile,
+  verifyEmail,
+  forgotPassword
 } = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const validateRequest = require('../middleware/validateRequestMiddleware');
@@ -29,6 +31,9 @@ validateRequest,
 registerUser
 );
 
+// Verify email
+router.get('/verify-email/:token', verifyEmail);
+
 // Login
 router.post(
   '/login',
@@ -37,7 +42,24 @@ router.post(
     body('password').notEmpty().withMessage('Password is required')
   ],
   validateRequest,
-  loginUser);
+  loginUser
+);
+
+  // Forgot Password
+  router.post(
+    '/forgot-password',
+    [body('email').isEmail().withMessage('Valid email required')],
+    validateRequest,
+    forgotPassword
+  );
+
+  // Reset Password
+   router.post(
+    '/reset-password/:token',
+    [body('email').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')],
+    validateRequest,
+    forgotPassword
+  );
 
 // Refresh access token
 router.post('/refresh-token', refreshToken);
