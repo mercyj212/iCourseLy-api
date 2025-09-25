@@ -41,14 +41,14 @@ exports.registerUser = async (req, res) => {
 
     // Send verification email
     await sendEmail({
-      to: email,
+      to: user.email,
       subject: "Verify Your Email",
       html: `
         <h2>Welcome to iCourseLy</h2>
         <p>Hi ${userName},</p>
         <p>Thanks for signing up! Please verify your email by clicking the link below:</p>
         <a href="${verificationUrl}" target="_blank">Verify Email</a>
-        <p>This link will expire in 24 hours.</p>
+        <p>This link will expire in 15 mins.</p>
       `,
     });
     
@@ -135,6 +135,19 @@ exports.forgotPassword = async (req, res) => {
     await user.save();
 
     const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+    // Send verification email
+    await sendEmail({
+      to: user.email,
+      subject: "Password Reset Request",
+      html: `
+        <h2>Request to iCourseLy</h2>
+        <p>You requested a password reset.</p>
+        <p> Please reset your password by clicking the link below:</p>
+        <a href="${resetUrl}" target="_blank">Reset Password</a>
+        <p>This link will expire in 15 mins.</p>
+      `,
+    });
+
     // Send resetUrl via email in production
     res.json({ message: 'Password reset email sent', resetUrl });
   } catch (err) {

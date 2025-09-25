@@ -11,7 +11,7 @@ const sendEmail = async (options) => {
         });
 
         const mailOptions = {
-            from: `"Course App" <${process.env.EMAIL_USER}>`,
+            from: `"iCourseLy" <${process.env.EMAIL_USER}>`,
             to: options.to,
             subject: options.subject,
             html: options.html,
