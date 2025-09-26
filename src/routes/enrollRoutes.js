@@ -16,6 +16,6 @@ router.post(
     );
 
 // Get all courses a user is enrolled in
-router.get('/', authMiddleware, getEnrollments);
+router.get('/:userId', authMiddleware, getEnrollments);
 
 module.exports = router;

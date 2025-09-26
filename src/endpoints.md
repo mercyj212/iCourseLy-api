@@ -29,12 +29,13 @@
 **GET** `/api/comments/:courseId`➖ Get comment for a course
 
 <!-- Progress -->
-**POST** `/api/progress`➖ Track progress
-**GET** `/api/progress/:userId/:courseid`➖ Get user progress for a course
+**GET** `/api/progress/lesson/:lessonId`➖ Track lesson progress
+**GET** `/api/progress/course/:courseid`➖ Get user progress for a course
+**POST** `/api/progress/complete` ➖ track user complete progress
 
 <!-- Enrollment -->
-**POST** `/api/enroll`➖ Enroll in a course
-**GET** `/api/enroll/:userId`➖ Get all allowed course
+**POST** `/api/enroll/:courseId`➖ Enroll in a course
+**GET** `/api/enroll/:userId`➖ Get all enrolled course
 
 <!-- Admin -->
 **GET** `/api/admin/users`➖ Get all users
