@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, param } = require('express-validator');
+const { param } = require('express-validator');
 const { 
     getAllUsers,
     getAllCoursesAdmin,
@@ -25,19 +25,21 @@ router.get('/courses', authMiddleware, roleMiddleware('admin'), getAllCoursesAdm
 
 router.delete(
     '/courses/:id',
-     authMiddleware, 
-     roleMiddleware('admin'), 
-     [ param('lessonId').isMongoId().withMessage('Invalid lesson ID')],
-     validateRequest,
-     deleteCourseAdmin);
+    authMiddleware,
+    roleMiddleware('admin'),
+    [ param('id').isMongoId().withMessage('Invalid course ID') ],
+    validateRequest,
+    deleteCourseAdmin
+);
 
 router.put(
-    '/courses/:id/approve', 
-    authMiddleware, 
+    '/courses/:id/approve',
+    authMiddleware,
     roleMiddleware('admin'),
-    [ param('lessonId').isMongoId().withMessage('Invalid lesson ID')],
+    [ param('id').isMongoId().withMessage('Invalid course ID') ],
     validateRequest,
-     approveCourse);
+    approveCourse
+);
 
 // Dashboard analytics
 router.get('/analytics', authMiddleware, roleMiddleware('admin'), getAnalytics);
