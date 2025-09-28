@@ -82,6 +82,8 @@ exports.verifyEmail = async (req, res) => {
     user.emailVerificationTokenExpires = undefined;
     await user.save();
 
+    
+
     res.json({ message: 'Email verified successfully' });
   } catch (err) {
     console.error('verifyEmail error:', err);
@@ -108,7 +110,7 @@ exports.resendVerificationEmail = async (req, res) => {
 
     await user.save();
 
-    const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+    const verificationUrl = `${process.env.CLIENT_URL}/auth/verify-email/${verificationToken}`;
 
     await sendEmail({
       to: user.email,
