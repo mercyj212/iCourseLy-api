@@ -7,7 +7,8 @@ const {
   getUserProfile,
   verifyEmail,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  resendVerificationEmail
 } = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const validateRequest = require('../middleware/validateRequestMiddleware');
@@ -34,6 +35,9 @@ registerUser
 
 // Verify email
 router.get('/verify-email/:token', verifyEmail);
+
+// Resend verification email
+router.post('/resend-verification', resendVerificationEmail);
 
 // Login
 router.post(

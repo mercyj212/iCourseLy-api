@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const sendEmail = require('../utils/sendEmail');
+const { error } = require('console');
 
 // TOKEN HELPERS 
 
@@ -81,6 +82,46 @@ exports.verifyEmail = async (req, res) => {
   } catch (err) {
     console.error('verifyEmail error:', err);
     res.status(500).json({ message: err.message });
+  }
+};
+
+// RESND VERIFICATION EMAIL
+exports.resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status().json({ message: 'Email is required' });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: 'Email is already verified' });
+    }
+
+    // Generate a new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    user.emailVerificationTokenExpires = Date.now() + parseInt(process.env.EMAIL_TOKEN_EXPIRES || 86400000);
+    await user.save();
+
+    const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+
+    // Send email
+    await sendEmail({
+      to: user.email,
+      subject: "Verify Your Email (Resent)",
+      html: `
+        <h2>Welcome back to iCourseLy</h2>
+        <p>Hi ${user.userName},</p>
+        <p>Please verify your email by clicking the link below</p>
+        <a href="${verificationUrl}" target="_blank">Verify Email</a>
+        <p>This link will expire in 24 hours.</p>
+      `,
+    });
+    res.json({ message: 'Verification email resent successfully', verificationUrl });
+  } catch (err) {
+      console.error('resendVerificationEmail error:', err);
+      res.status(500).json({ message: err.message });
   }
 };
 

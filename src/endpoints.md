@@ -5,6 +5,7 @@
 **POST** `/api/auth/login`➖ Login User
 **GET** `/api/auth/profile`➖ Get logged-in user profile
 **GET** `/api/auth/verify-email/:token`➖ To verify user email
+**POST** `/api/auth/resend-verification/:token`
 **POST** `/api/auth/forgot-password`➖ To request for a new password
 **POST** `/api/auth/reset-password/:token`➖ To reset a password
 **POST** `/api/auth/refresh-token`➖ To get a new token
