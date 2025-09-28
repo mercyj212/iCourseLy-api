@@ -37,8 +37,7 @@ exports.registerUser = async (req, res) => {
     await user.save();
 
     // Normally send email here with the URL
-    const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
-
+    const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
     // Send verification email
     await sendEmail({
       to: user.email,
