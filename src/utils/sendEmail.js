@@ -3,12 +3,12 @@ const nodemailer = require("nodemailer");
 const sendEmail = async (options) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,       // smtp.gmail.com
-      port: process.env.EMAIL_PORT,       // 587
-      secure: false,                      // use TLS (false for 587, true for 465)
+      host: process.env.EMAIL_HOST, // smtp-relay.brevo.com
+      port: process.env.EMAIL_PORT, // 587
+      secure: false, // TLS (false for 587, true for 465)
       auth: {
-        user: process.env.EMAIL_USER,     // your Gmail address
-        pass: process.env.EMAIL_PASS,     // your App Password
+        user: process.env.EMAIL_USER, // your Brevo login email
+        pass: process.env.EMAIL_PASS, // your Brevo SMTP key
       },
     });
 
