@@ -1,23 +1,29 @@
-const Brevo = require("@getbrevo/brevo");
+const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  try {
-    const client = new Brevo.TransactionalEmailsApi();
-    client.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.EMAIL_API_KEY);
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
 
-    const sendSmtpEmail = new Brevo.SendSmtpEmail({
-      to: [{ email: options.to }],
-      sender: { email: process.env.EMAIL_FROM },
-      subject: options.subject,
-      htmlContent: options.html,
-    });
+        const mailOptions = {
+            from: `"iCourseLy" <${process.env.EMAIL_USER}>`,
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+        };
 
-    const response = await client.sendTransacEmail(sendSmtpEmail);
-    console.log(`✅ Email sent to ${options.to}`, response);
-  } catch (err) {
-    console.error("❌ Email sending failed:", err.response?.body || err.message);
-    throw new Error("Email could not be sent");
-  }
+        await transporter.sendMail(mailOptions);
+
+        console.log(`✅ Email sent to ${options.to}`); 
+    } catch (err) {
+        console.error('❌ Email sending failed:', err);
+        throw new Error("Email could not be sent");
+    }
 };
 
 module.exports = sendEmail;
