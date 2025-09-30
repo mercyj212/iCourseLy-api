@@ -68,6 +68,9 @@ exports.registerUser = async (req, res) => {
 // =================== EMAIL VERIFICATION ===================
 exports.verifyEmail = async (req, res) => {
   try {
+    const { token } = req.params;
+    if (!token) return res.status(400).json({ message: 'No token provided' });
+
     const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
     const user = await User.findOne({
@@ -75,7 +78,10 @@ exports.verifyEmail = async (req, res) => {
       emailVerificationTokenExpires: { $gt: Date.now() }
     });
 
-    if (!user) return res.status(400).json({ message: 'Invalid or expired token' });
+    if (!user) {
+      console.log('Token not found or expired:', token);
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    } 
 
     user.emailVerified = true;
     user.emailVerificationToken = undefined;
