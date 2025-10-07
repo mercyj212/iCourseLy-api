@@ -27,12 +27,7 @@ exports.updateUserRole = async (req, res) => {
       return res.status(400).json({ message: 'Invalid role' });
     }
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { role },
-      { new: true, runValidators: true }
-    );
-
+    const user = await User.findByIdAndUpdate(userId, { role }, { new: true, runValidators: true });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.json({ message: 'User role updated successfully', user });
@@ -47,7 +42,6 @@ exports.deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findByIdAndDelete(userId);
-
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.json({ message: 'User deleted successfully' });
@@ -63,7 +57,7 @@ exports.deleteUser = async (req, res) => {
 exports.getAllCoursesAdmin = async (req, res) => {
   try {
     const courses = await Course.find()
-      .populate('instructorId', 'userName email role')
+      .populate('instructorId', 'userName email role avatar')
       .sort({ createdAt: -1 });
     res.json(courses);
   } catch (err) {
@@ -83,9 +77,7 @@ exports.deleteCourseAdmin = async (req, res) => {
     // Remove from instructor's createdCourses
     const instructor = await User.findById(course.instructorId);
     if (instructor) {
-      instructor.createdCourses = instructor.createdCourses.filter(
-        c => c.toString() !== course._id.toString()
-      );
+      instructor.createdCourses = instructor.createdCourses.filter(c => c.toString() !== course._id.toString());
       await instructor.save();
     }
 
@@ -124,7 +116,6 @@ exports.approveCourse = async (req, res) => {
 exports.createCourseAdmin = async (req, res) => {
   try {
     const { title, description, category, price, instructorId } = req.body;
-
     if (!title || !description || !category || !price || !instructorId) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -132,9 +123,7 @@ exports.createCourseAdmin = async (req, res) => {
     // Upload cover image (optional)
     let coverImage = null;
     if (req.file) {
-      const uploaded = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'course_covers',
-      });
+      const uploaded = await cloudinary.uploader.upload(req.file.path, { folder: 'course_covers' });
       coverImage = { url: uploaded.secure_url, public_id: uploaded.public_id };
     }
 
@@ -158,7 +147,6 @@ exports.createCourseAdmin = async (req, res) => {
       await instructor.save();
     }
 
-    // Emit Socket.IO notification
     req.app.get('io')?.emit('notification', {
       message: `New course created: ${course.title}`,
       timestamp: new Date(),
@@ -174,7 +162,6 @@ exports.createCourseAdmin = async (req, res) => {
 };
 
 // ----------------- Analytics -----------------
-
 exports.getAnalytics = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -199,8 +186,6 @@ exports.getAnalytics = async (req, res) => {
 };
 
 // ----------------- Notifications -----------------
-
-// Get all notifications
 exports.getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find().sort({ createdAt: -1 });
@@ -211,7 +196,6 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
-// Mark all notifications as read
 exports.markNotificationAsRead = async (req, res) => {
   try {
     await Notification.updateMany({ read: false }, { read: true });
@@ -222,28 +206,43 @@ exports.markNotificationAsRead = async (req, res) => {
   }
 };
 
-// ----------------- Purchase Example -----------------
-
-exports.createPurchase = async (req, res) => {
+// ----------------- Admin Profile & Avatar -----------------
+exports.getAdminProfile = async (req, res) => {
   try {
-    // Example: saving purchase (replace with actual logic)
-    const purchase = {
-      courseName: req.body.courseName,
-      userName: req.body.userName,
-      amount: req.body.amount,
-    };
+    // Accept either _id or id from token
+    const userId = req.user._id || req.user.id;
+    if (!userId) return res.status(401).json({ message: 'Invalid token' });
 
-    // Emit real-time notification
-    req.app.get('io')?.emit('notification', {
-      message: `New purchase: ${purchase.courseName} by ${purchase.userName}`,
-      timestamp: new Date(),
-    });
+    const admin = await User.findOne({ _id: userId, role: 'admin' }).select('-password');
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
 
-    await Notification.create({ message: `New purchase: ${purchase.courseName} by ${purchase.userName}` });
-
-    res.status(201).json({ success: true, purchase });
+    res.json(admin);
   } catch (err) {
-    console.error('createPurchase error:', err);
+    console.error('getAdminProfile error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const userId = req.user._id || req.user.id;
+    if (!userId) return res.status(401).json({ message: 'Invalid token' });
+
+    const uploaded = await cloudinary.uploader.upload(req.file.path, { folder: 'admin_avatars' });
+
+    const admin = await User.findOneAndUpdate(
+      { _id: userId, role: 'admin' },
+      { avatar: uploaded.secure_url },
+      { new: true }
+    ).select('-password');
+
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+
+    res.json({ message: 'Avatar uploaded successfully', avatarUrl: admin.avatar });
+  } catch (err) {
+    console.error('uploadAvatar error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

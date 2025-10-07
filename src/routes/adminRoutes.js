@@ -1,16 +1,18 @@
 const express = require('express');
 const { param } = require('express-validator');
-const { 
-    getAllUsers,
-    getAllCoursesAdmin,
-    deleteCourseAdmin,
-    approveCourse,
-    getAnalytics,
-    updateUserRole,
-    deleteUser,
-    createCourseAdmin,
-    getNotifications,
-    markNotificationAsRead
+const {
+  getAllUsers,
+  getAllCoursesAdmin,
+  deleteCourseAdmin,
+  approveCourse,
+  getAnalytics,
+  updateUserRole,
+  deleteUser,
+  createCourseAdmin,
+  getNotifications,
+  markNotificationAsRead,
+  getAdminProfile,
+  uploadAvatar
 } = require('../controllers/adminController');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -28,16 +30,34 @@ router.delete('/users/:userId', authMiddleware, roleMiddleware('admin'), deleteU
 // ------------------ Courses ------------------
 router.get('/courses', authMiddleware, roleMiddleware('admin'), getAllCoursesAdmin);
 router.post('/courses', authMiddleware, roleMiddleware('admin'), upload.single('coverImage'), createCourseAdmin);
-router.delete('/courses/:id', authMiddleware, roleMiddleware('admin'), [param('id').isMongoId().withMessage('Invalid course ID')], validateRequest, deleteCourseAdmin);
-router.put('/courses/:id/approve', authMiddleware, roleMiddleware('admin'), [param('id').isMongoId().withMessage('Invalid course ID')], validateRequest, approveCourse);
+router.delete(
+  '/courses/:id',
+  authMiddleware,
+  roleMiddleware('admin'),
+  [param('id').isMongoId().withMessage('Invalid course ID')],
+  validateRequest,
+  deleteCourseAdmin
+);
+router.put(
+  '/courses/:id/approve',
+  authMiddleware,
+  roleMiddleware('admin'),
+  [param('id').isMongoId().withMessage('Invalid course ID')],
+  validateRequest,
+  approveCourse
+);
 
 // ------------------ Notifications ------------------
 router.get('/notifications', authMiddleware, roleMiddleware('admin'), getNotifications);
 
-// If marking all notifications as read:
+// Mark all notifications as read
 router.put('/notifications/read', authMiddleware, roleMiddleware('admin'), markNotificationAsRead);
 
 // ------------------ Analytics ------------------
 router.get('/analytics', authMiddleware, roleMiddleware('admin'), getAnalytics);
+
+// ------------------ Admin Profile ------------------
+router.get('/profile', authMiddleware, roleMiddleware('admin'), getAdminProfile);
+router.post('/upload-avatar', authMiddleware, roleMiddleware('admin'), upload.single('avatar'), uploadAvatar);
 
 module.exports = router;

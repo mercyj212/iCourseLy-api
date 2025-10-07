@@ -56,7 +56,13 @@ const userSchema = new mongoose.Schema({
 
     // Password reset fields
     passwordResetToken: String,
-    passwordResetTokenExpires: Date
+    passwordResetTokenExpires: Date,
+
+    avatar: 
+    { 
+        type: String, 
+        default: "https://cdn-icons-png.flaticon.com/512/847/847969.png" 
+    }
 
 }, { timestamps: true });
 
@@ -72,5 +78,7 @@ userSchema.pre('save', async function(next) {
 userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
+
+
 
 module.exports = mongoose.model('User', userSchema);
