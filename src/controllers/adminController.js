@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Course = require('../models/Course');
+const Notification = require('../models/Notification');
 const cloudinary = require('../config/cloudinary');
 
 // Get all users
@@ -186,3 +187,26 @@ exports.createCourseAdmin = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// Get all notifications (Admin only)
+exports.getNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find().sort({ createdAt: -1 });
+        res.json(notifications);
+    } catch (err) {
+        console.error('getNotifications error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Mark a notification as read (Admin only)
+exports.markNotificationAsRead = async (req, res) => {
+  try {
+    await Notification.updateMany({ read: false }, { read: true });
+    res.status(200).json({ message: 'Notifications marked as read' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to mark notifications as read' });
+  }
+};
+
+

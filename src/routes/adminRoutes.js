@@ -8,7 +8,9 @@ const {
     getAnalytics,
     updateUserRole,
     deleteUser,
-    createCourseAdmin
+    createCourseAdmin,
+    getNotifications,
+    markNotificationAsRead
 } = require('../controllers/adminController');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -55,6 +57,20 @@ router.put(
     [ param('id').isMongoId().withMessage('Invalid course ID') ],
     validateRequest,
     approveCourse
+);
+// ===========================
+// 🔹 Notifications
+// ===========================
+router.get('/notifications', authMiddleware, roleMiddleware('admin'), getNotifications);
+
+// Mark a notification as read
+router.put(
+    '/notifications/:id/read',
+    authMiddleware,
+    roleMiddleware('admin'),
+    [ param('id').isMongoId().withMessage('Invalid notification ID') ],
+    validateRequest,
+    markNotificationAsRead
 );
 
 // ===========================
