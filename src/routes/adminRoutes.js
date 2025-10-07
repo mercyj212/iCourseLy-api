@@ -16,66 +16,28 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const validateRequest = require('../middleware/validateRequestMiddleware');
-const upload = require('../middleware/uploadMiddleware'); // ✅ For image upload (if using Cloudinary or multer)
+const upload = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
 
-// ===========================
-// 🔹 User Management
-// ===========================
-router.put('/users/:id/role', authMiddleware, roleMiddleware('admin'), updateUserRole);
-router.delete('/users/:id', authMiddleware, roleMiddleware('admin'), deleteUser);
+// ------------------ Users ------------------
 router.get('/users', authMiddleware, roleMiddleware('admin'), getAllUsers);
+router.put('/users/:userId/role', authMiddleware, roleMiddleware('admin'), updateUserRole);
+router.delete('/users/:userId', authMiddleware, roleMiddleware('admin'), deleteUser);
 
-// ===========================
-// 🔹 Courses Management
-// ===========================
+// ------------------ Courses ------------------
 router.get('/courses', authMiddleware, roleMiddleware('admin'), getAllCoursesAdmin);
+router.post('/courses', authMiddleware, roleMiddleware('admin'), upload.single('coverImage'), createCourseAdmin);
+router.delete('/courses/:id', authMiddleware, roleMiddleware('admin'), [param('id').isMongoId().withMessage('Invalid course ID')], validateRequest, deleteCourseAdmin);
+router.put('/courses/:id/approve', authMiddleware, roleMiddleware('admin'), [param('id').isMongoId().withMessage('Invalid course ID')], validateRequest, approveCourse);
 
-// ✅ Create a new course (Admin Only)
-router.post(
-    '/courses',
-    authMiddleware,
-    roleMiddleware('admin'),
-    upload.single('coverImage'), // optional if you want to upload images
-    createCourseAdmin
-);
-
-router.delete(
-    '/courses/:id',
-    authMiddleware,
-    roleMiddleware('admin'),
-    [ param('id').isMongoId().withMessage('Invalid course ID') ],
-    validateRequest,
-    deleteCourseAdmin
-);
-
-router.put(
-    '/courses/:id/approve',
-    authMiddleware,
-    roleMiddleware('admin'),
-    [ param('id').isMongoId().withMessage('Invalid course ID') ],
-    validateRequest,
-    approveCourse
-);
-// ===========================
-// 🔹 Notifications
-// ===========================
+// ------------------ Notifications ------------------
 router.get('/notifications', authMiddleware, roleMiddleware('admin'), getNotifications);
 
-// Mark a notification as read
-router.put(
-    '/notifications/:id/read',
-    authMiddleware,
-    roleMiddleware('admin'),
-    [ param('id').isMongoId().withMessage('Invalid notification ID') ],
-    validateRequest,
-    markNotificationAsRead
-);
+// If marking all notifications as read:
+router.put('/notifications/read', authMiddleware, roleMiddleware('admin'), markNotificationAsRead);
 
-// ===========================
-// 🔹 Dashboard analytics
-// ===========================
+// ------------------ Analytics ------------------
 router.get('/analytics', authMiddleware, roleMiddleware('admin'), getAnalytics);
 
 module.exports = router;
