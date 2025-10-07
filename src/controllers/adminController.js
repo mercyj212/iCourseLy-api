@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Course = require('../models/Course');
+const cloudinary = require('../config/cloudinary');
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
@@ -16,7 +17,7 @@ exports.getAllUsers = async (req, res) => {
 exports.getAllCoursesAdmin = async (req, res) => {
     try {
         const courses = await Course.find()
-            .populate('ínstructorId', 'userName email role')
+            .populate('instructorId', 'userName email role')
             .sort({ createdAt: -1 });
         res.json(courses);
     } catch (err) {
@@ -28,7 +29,7 @@ exports.getAllCoursesAdmin = async (req, res) => {
 // Delete any course
 exports.deleteCourseAdmin = async (req, res) => {
     try {
-        const course = await Course.findById(req.params,id);
+        const course = await Course.findById(req.params.id);
         if (!course) return res.status(404).json({ message: 'Course not found' });
 
         await course.deleteOne();
@@ -133,4 +134,55 @@ exports.deleteUser = async (req, res) => {
         console.error('deleteUser error:', error);
         res.status(500).json({ message: 'Server error' });
     }
+};
+
+// Additional admin functionalities can be added here
+// Admin creates a course
+exports.createCourseAdmin = async (req, res) => {
+  try {
+    const { title, description, category, price, instructorId } = req.body;
+
+    if (!title || !description || !category || !price || !instructorId) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Upload cover image (optional)
+    let coverImage = null;
+    if (req.file) {
+      const uploaded = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'course_covers',
+      });
+      coverImage = { url: uploaded.secure_url, public_id: uploaded.public_id };
+    }
+
+    // Create new course
+    const course = new Course({
+      title,
+      description,
+      category,
+      price,
+      coverImage,
+      instructorId,
+      isPublished: false,
+      isApproved: false,
+    });
+
+    await course.save();
+
+    // Add to instructor’s createdCourses
+    const instructor = await User.findById(instructorId);
+    if (instructor) {
+      instructor.createdCourses.push(course._id);
+      await instructor.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Course created successfully',
+      data: course,
+    });
+  } catch (err) {
+    console.error('createCourseAdmin error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };
