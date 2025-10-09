@@ -1,4 +1,3 @@
-// controllers/adminController.js
 const User = require('../models/User');
 const Course = require('../models/Course');
 const Notification = require('../models/Notification');
@@ -16,6 +15,43 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// @desc Get all instructors
+// @access Private (Admin only)
+exports.getAllInstructors = async (req, res) => {
+  try {
+    const instructors = await User.find({ role: "instructor" }).select("-password");
+    res.json(instructors);
+  } catch (error) {
+    console.error("Error fetching instructors:", error);
+    res.status(500).json({ message: "Failed to fetch instructors" });
+  }
+};
+
+exports.addInstructors = async (req, res) => {
+  try {
+    const { name, email, password, status } = req.body;
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: "Email already exists" });
+
+    const hashedPassword = await bcrypt.hash(password || "instructor123", 10);
+
+    const newInstructor = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "instructor",
+      status: status || "active",
+    });
+
+    res.status(201).json(newInstructor);
+  } catch (err) {
+    console.error("Error creating instructor:", err);
+    res.status(500).json({ message: "Failed to create instructor" });
+  }
+};
+
+
 
 // Update user role
 exports.updateUserRole = async (req, res) => {
@@ -171,6 +207,25 @@ exports.getAnalytics = async (req, res) => {
     const publishedCourses = await Course.countDocuments({ isPublished: true });
     const approvedCourses = await Course.countDocuments({ isApproved: true });
 
+    // Mock chart data (for demo)
+    const usersGrowth = [
+      { month: "Jan", count: 10 },
+      { month: "Feb", count: 25 },
+      { month: "Mar", count: 40 },
+      { month: "Apr", count: 50 },
+      { month: "May", count: 70 },
+      { month: "Jun", count: 100 },
+    ];
+
+    const revenueGrowth = [
+      { month: "Jan", amount: 500 },
+      { month: "Feb", amount: 1200 },
+      { month: "Mar", amount: 1800 },
+      { month: "Apr", amount: 2500 },
+      { month: "May", amount: 3100 },
+      { month: "Jun", amount: 4000 },
+    ];
+
     res.json({
       totalUsers,
       totalInstructors,
@@ -178,6 +233,8 @@ exports.getAnalytics = async (req, res) => {
       totalCourses,
       publishedCourses,
       approvedCourses,
+      usersGrowth,
+      revenueGrowth,
     });
   } catch (err) {
     console.error('getAnalytics error:', err);
@@ -243,6 +300,67 @@ exports.uploadAvatar = async (req, res) => {
     res.json({ message: 'Avatar uploaded successfully', avatarUrl: admin.avatar });
   } catch (err) {
     console.error('uploadAvatar error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update admin profile (name, email)
+exports.updateAdminProfile = async (req, res) => {
+  try {
+    const userId = (req.user && (req.user._id || req.user.id)) || req.user; // be tolerant of token shape
+    const { userName, email } = req.body;
+
+    if (!userName && !email) {
+      return res.status(400).json({ message: 'Nothing to update' });
+    }
+
+    // If email provided, ensure uniqueness
+    if (email) {
+      const existing = await User.findOne({ email: email.toLowerCase().trim() });
+      if (existing && existing._id.toString() !== userId.toString()) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+    }
+
+    const update = {};
+    if (userName) update.userName = userName;
+    if (email) update.email = email.toLowerCase().trim();
+
+    const updated = await User.findByIdAndUpdate(userId, update, { new: true }).select('-password');
+    if (!updated) return res.status(404).json({ message: 'Admin not found' });
+
+    res.json({ message: 'Profile updated', user: updated });
+  } catch (err) {
+    console.error('updateAdminProfile error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Change admin password
+exports.changeAdminPassword = async (req, res) => {
+  try {
+    const userId = (req.user && (req.user._id || req.user.id)) || req.user;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Both current and new password are required' });
+    }
+
+    const user = await User.findById(userId).select('+password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // You can add password strength validation here
+    user.password = newPassword;
+    await user.save(); // pre('save') will hash
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('changeAdminPassword error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

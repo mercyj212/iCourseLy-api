@@ -12,7 +12,11 @@ const {
   getNotifications,
   markNotificationAsRead,
   getAdminProfile,
-  uploadAvatar
+  uploadAvatar,
+  getAllInstructors,
+  addInstructors,
+  updateAdminProfile,
+  changeAdminPassword
 } = require('../controllers/adminController');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -24,6 +28,8 @@ const router = express.Router();
 
 // ------------------ Users ------------------
 router.get('/users', authMiddleware, roleMiddleware('admin'), getAllUsers);
+router.get('/instructors', authMiddleware, roleMiddleware('admin'), getAllInstructors);
+router.post('/instructors', authMiddleware, roleMiddleware('admin'), addInstructors);
 router.put('/users/:userId/role', authMiddleware, roleMiddleware('admin'), updateUserRole);
 router.delete('/users/:userId', authMiddleware, roleMiddleware('admin'), deleteUser);
 
@@ -58,6 +64,8 @@ router.get('/analytics', authMiddleware, roleMiddleware('admin'), getAnalytics);
 
 // ------------------ Admin Profile ------------------
 router.get('/profile', authMiddleware, roleMiddleware('admin'), getAdminProfile);
+router.put('/profile', authMiddleware, roleMiddleware('admin'), updateAdminProfile);
+router.put('/change-password', authMiddleware, roleMiddleware('admin'), changeAdminPassword);
 router.post('/upload-avatar', authMiddleware, roleMiddleware('admin'), upload.single('avatar'), uploadAvatar);
 
 module.exports = router;
