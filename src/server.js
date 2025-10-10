@@ -27,6 +27,7 @@ app.use("/api/comments", require("./routes/commentRoutes"));
 app.use("/api/progress", require("./routes/progressRoutes"));
 app.use("/api/enroll", require("./routes/enrollRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/student", require("./routes/studentRoutes"));
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
