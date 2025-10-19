@@ -8,11 +8,11 @@ export const getStudentDashboard = async (req, res) => {
   try {
     const studentId = req.params.studentId;
 
-    // 🟡 1. Get all enrolled courses
+    //  1. Get all enrolled courses
     const enrolledCourses = await Enroll.find({ student: studentId }).populate('course');
     const totalCourses = enrolledCourses.length;
 
-    // 🟡 2. Get all completed lessons
+    //  2. Get all completed lessons
     const completedLessons = await Progress.find({
       student: studentId,
       completed: true,
@@ -20,7 +20,7 @@ export const getStudentDashboard = async (req, res) => {
 
     const completedLessonsCount = completedLessons.length;
 
-    // 🟡 3. Calculate progress per course
+    //  3. Calculate progress per course
     const progressData = {};
     for (const enroll of enrolledCourses) {
       const totalLessons = await Lesson.countDocuments({ course: enroll.course._id });
@@ -33,20 +33,20 @@ export const getStudentDashboard = async (req, res) => {
       progressData[enroll.course._id] = progressPercent;
     }
 
-    // 🟡 4. Count in-progress courses (progress between 1%–99%)
+    //  4. Count in-progress courses (progress between 1%–99%)
     const inProgressCount = Object.values(progressData).filter(
       (p) => p > 0 && p < 100
     ).length;
 
-    // 🟡 5. Points earned (10 per lesson)
+    //  5. Points earned (10 per lesson)
     const totalPoints = completedLessonsCount * 10;
 
-    // 🟡 6. Recent lessons (last 5 completed)
+    //  6. Recent lessons (last 5 completed)
     const recentLessons = completedLessons
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, 5);
 
-    // 🟡 7. Recent courses
+    // 7. Recent courses
     const recentCourses = enrolledCourses.slice(-3).map((en) => ({
       id: en.course._id,
       title: en.course.title,
@@ -55,19 +55,19 @@ export const getStudentDashboard = async (req, res) => {
       progress: Math.round(progressData[en.course._id] || 0),
     }));
 
-    // 🟡 8. Recommended courses
+    // 8. Recommended courses
     const enrolledIds = enrolledCourses.map((e) => e.course._id);
     const recommended = await Course.find({ _id: { $nin: enrolledIds } })
       .sort({ createdAt: -1 })
       .limit(3);
 
-    // 🟡 9. Recent comments
+    //  9. Recent comments
     const recentComments = await Comment.find({ student: studentId })
       .populate('course')
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // 🟡 10. Streaks (consecutive active days)
+    //  10. Streaks (consecutive active days)
     const today = new Date();
     const pastWeek = new Date(today);
     pastWeek.setDate(today.getDate() - 7);
@@ -80,13 +80,13 @@ export const getStudentDashboard = async (req, res) => {
       recentProgress.map((p) => new Date(p.updatedAt).toDateString())
     ).size;
 
-    // 🟡 11. Badges (based on points or streaks)
+    //  11. Badges (based on points or streaks)
     const badges = [];
     if (totalPoints >= 100) badges.push('🏅 Fast Learner');
     if (streakDays >= 3) badges.push('🔥 3-Day Streak');
     if (completedLessonsCount >= 20) badges.push('🎓 Course Champion');
 
-    // ✅ Send response
+    //  Send response
     res.status(200).json({
       totalCourses,
       completedLessons: completedLessonsCount,
