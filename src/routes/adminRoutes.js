@@ -66,6 +66,6 @@ router.get('/analytics', authMiddleware, roleMiddleware('admin'), getAnalytics);
 router.get('/profile', authMiddleware, roleMiddleware('admin'), getAdminProfile);
 router.put('/profile', authMiddleware, roleMiddleware('admin'), updateAdminProfile);
 router.put('/change-password', authMiddleware, roleMiddleware('admin'), changeAdminPassword);
-router.post('/upload-avatar', authMiddleware, roleMiddleware('admin'), upload.single('avatar'), uploadAvatar);
+// router.post('/upload-avatar', authMiddleware, roleMiddleware('admin'), upload.single('avatar'), uploadAvatar);
 
 module.exports = router;

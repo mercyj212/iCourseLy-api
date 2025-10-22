@@ -7,6 +7,7 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
+
 // Load environment variables
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use("/api/progress", require("./routes/progressRoutes"));
 app.use("/api/enroll", require("./routes/enrollRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/student", require("./routes/studentRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);

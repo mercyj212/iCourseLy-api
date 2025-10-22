@@ -280,29 +280,6 @@ exports.getAdminProfile = async (req, res) => {
   }
 };
 
-exports.uploadAvatar = async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-
-    const userId = req.user._id || req.user.id;
-    if (!userId) return res.status(401).json({ message: 'Invalid token' });
-
-    const uploaded = await cloudinary.uploader.upload(req.file.path, { folder: 'admin_avatars' });
-
-    const admin = await User.findOneAndUpdate(
-      { _id: userId, role: 'admin' },
-      { avatar: uploaded.secure_url },
-      { new: true }
-    ).select('-password');
-
-    if (!admin) return res.status(404).json({ message: 'Admin not found' });
-
-    res.json({ message: 'Avatar uploaded successfully', avatarUrl: admin.avatar });
-  } catch (err) {
-    console.error('uploadAvatar error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
 
 // Update admin profile (name, email)
 exports.updateAdminProfile = async (req, res) => {
