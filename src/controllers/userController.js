@@ -24,11 +24,27 @@ exports.uploadAvatar = async (req, res) => {
       { new: true }
     ).select("-password");
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.json({ message: "Avatar uploaded successfully", avatarUrl: user.profileImage });
+    res.json({
+      message:"Avatar uploaded Sucessfully",
+      avatarUrl: user.profileImage
+    });
   } catch (err) {
     console.error("uploadAvatar error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user });
+  } catch (err) {
+    console.error("getCurrentUser error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

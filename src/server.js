@@ -31,6 +31,7 @@ app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 
+
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, {

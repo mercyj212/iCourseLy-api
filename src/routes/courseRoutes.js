@@ -6,7 +6,8 @@ const {
     getCourseById, 
     updateCourse, 
     deleteCourse, 
-    getMyCourses 
+    getMyCourses, 
+    searchCourses
 } = require('../controllers/courseController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
@@ -67,4 +68,7 @@ router.delete(
     deleteCourse
 );
 
+router.get("/search", searchCourses);
+
 module.exports = router;
+
