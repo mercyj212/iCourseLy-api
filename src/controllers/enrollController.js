@@ -1,74 +1,97 @@
-const { validationResult } = require('express-validator');
 const Course = require('../models/Course');
-const User = require('../models/User');
 const Enroll = require('../models/Enroll');
+const Lesson = require('../models/Lesson');
 
 exports.enrollCourse = async (req, res) => {
   try {
-    // ✅ Run validation first
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const userId = req.user._id || req.user.id;
-
-    // ✅ Only students can enroll
-    if (req.user.role !== 'student') {
-      return res.status(403).json({ message: 'Only students can enroll in courses' });
-    }
-
+    const studentId = req.user.id;
     const { courseId } = req.params;
 
-    // ✅ Find course
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: 'Only students can enroll' });
+    }
+
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // ✅ Check if already enrolled
-    if (course.students.includes(userId)) {
-      return res.status(400).json({ message: 'Already enrolled in this course' });
+    const alreadyEnrolled = await Enroll.findOne({ studentId, courseId });
+    if (alreadyEnrolled) {
+      return res.status(400).json({ message: 'Already enrolled' });
     }
 
-    // ✅ Add user to course students
-    course.students.push(userId);
-    await course.save();
+    const enrollment = await Enroll.create({
+      studentId,
+      courseId,
+      enrolledAt: new Date(),
+      progress: [],
+      completionPercentage: 0
+    });
 
-    // ✅ Add course to user's enrolledCourses
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!course.students.includes(studentId)) {
+      course.students.push(studentId);
+      await course.save();
     }
 
-    if (!user.enrolledCourses.includes(courseId)) {
-      user.enrolledCourses.push(courseId);
-      await user.save();
-    }
-
-    // ✅ Create a record in Enroll collection
-    const alreadyEnrolled = await Enroll.findOne({ student: userId, course: courseId });
-    if (!alreadyEnrolled) {
-      await Enroll.create({ student: userId, course: courseId });
-    }
-
-    res.status(200).json({ message: 'Enrolled successfully', course });
+    res.status(201).json({
+      message: 'Enrolled successfully',
+      enrollment,
+    });
   } catch (error) {
-    console.error('enrollCourse error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message });
   }
 };
 
 exports.getEnrollments = async (req, res) => {
   try {
-    const userId = req.user._id || req.user.id;
+    const studentId = req.user.id;
 
-    const user = await User.findById(userId).populate('enrolledCourses');
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const enrollments = await Enroll.find({ studentId })
+      .populate('courseId');
 
-    res.json(user.enrolledCourses);
+    res.json(enrollments);
   } catch (error) {
-    console.error('getEnrollments error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.markLessonComplete = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.body;
+    const studentId = req.user.id;
+
+    const enroll = await Enroll.findOne({ studentId, courseId });
+    if (!enroll) {
+      return res.status(404).json({ message: 'Not enrolled in this course' });
+    }
+
+    const alreadyCompleted = enroll.progress.find(
+      p => p.lessonId.toString() === lessonId
+    );
+
+    if (!alreadyCompleted) {
+      enroll.progress.push({
+        lessonId,
+        completedAt: new Date(),
+      });
+    }
+
+    // ✅ FIX: calculate completion correctly
+    const totalLessons = await Lesson.countDocuments({ courseId });
+    const completedLessons = enroll.progress.length;
+
+    enroll.completionPercentage = totalLessons > 0
+      ? Math.round((completedLessons / totalLessons) * 100)
+      : 0;
+
+    await enroll.save();
+
+    res.json({
+      message: 'Lesson marked as complete',
+      enroll,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

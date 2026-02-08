@@ -1,107 +1,97 @@
 import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
 import Enroll from '../models/Enroll.js';
-import Progress from '../models/Progress.js';
 import Comment from '../models/Comment.js';
 
 export const getStudentDashboard = async (req, res) => {
   try {
     const studentId = req.params.studentId;
 
-    //  1. Get all enrolled courses
-    const enrolledCourses = await Enroll.find({ student: studentId }).populate('course');
-    const totalCourses = enrolledCourses.length;
+    // 1️⃣ Enrollments
+    const enrollments = await Enroll.find({ studentId })
+      .populate('courseId');
 
-    //  2. Get all completed lessons
-    const completedLessons = await Progress.find({
-      student: studentId,
-      completed: true,
-    }).populate('lesson');
+    const totalCourses = enrollments.length;
 
-    const completedLessonsCount = completedLessons.length;
+    let completedLessonsCount = 0;
+    let currentCourse = null;
 
-    //  3. Calculate progress per course
+    // 2️⃣ Progress per course (from Enroll.progress)
     const progressData = {};
-    for (const enroll of enrolledCourses) {
-      const totalLessons = await Lesson.countDocuments({ course: enroll.course._id });
-      const completed = await Progress.countDocuments({
-        student: studentId,
-        course: enroll.course._id,
-        completed: true,
+
+    for (const enroll of enrollments) {
+      const totalLessons = await Lesson.countDocuments({
+        courseId: enroll.courseId._id,
       });
-      const progressPercent = totalLessons > 0 ? (completed / totalLessons) * 100 : 0;
-      progressData[enroll.course._id] = progressPercent;
+
+      const completedLessons = enroll.progress.filter(
+        (p) => p.completedAt
+      ).length;
+
+      const progressPercent = totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+      progressData[enroll.courseId._id] = progressPercent;
+      completedLessonsCount += completedLessons;
+
+      if (!currentCourse && progressPercent > 0 && progressPercent < 100) {
+        currentCourse = {
+          title: enroll.courseId.title,
+          instructor: enroll.courseId.instructorId,
+          progress: progressPercent,
+        };
+      }
     }
 
-    //  4. Count in-progress courses (progress between 1%–99%)
-    const inProgressCount = Object.values(progressData).filter(
-      (p) => p > 0 && p < 100
-    ).length;
+    // Fallback current course
+    if (!currentCourse && enrollments.length > 0) {
+      const last = enrollments[enrollments.length - 1];
+      currentCourse = {
+        title: last.courseId.title,
+        instructor: last.courseId.instructorId,
+        progress: progressData[last.courseId._id] || 0,
+      };
+    }
 
-    //  5. Points earned (10 per lesson)
+    // 3️⃣ Points
     const totalPoints = completedLessonsCount * 10;
 
-    //  6. Recent lessons (last 5 completed)
-    const recentLessons = completedLessons
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .slice(0, 5);
-
-    // 7. Recent courses
-    const recentCourses = enrolledCourses.slice(-3).map((en) => ({
-      id: en.course._id,
-      title: en.course.title,
-      instructor: en.course.instructor,
-      cover: en.course.coverImage || '/default-course.jpg',
-      progress: Math.round(progressData[en.course._id] || 0),
+    // 4️⃣ Recent courses
+    const recentCourses = enrollments.slice(-3).map((enroll) => ({
+      id: enroll.courseId._id,
+      title: enroll.courseId.title,
+      instructor: enroll.courseId.instructorId,
+      cover: enroll.courseId.coverImage || '/default-course.jpg',
+      progress: progressData[enroll.courseId._id] || 0,
     }));
 
-    // 8. Recommended courses
-    const enrolledIds = enrolledCourses.map((e) => e.course._id);
-    const recommended = await Course.find({ _id: { $nin: enrolledIds } })
+    // 5️⃣ Recommended courses
+    const enrolledIds = enrollments.map((e) => e.courseId._id);
+    const recommended = await Course.find({
+      _id: { $nin: enrolledIds },
+    })
       .sort({ createdAt: -1 })
       .limit(3);
 
-    //  9. Recent comments
+    // 6️⃣ Recent comments
     const recentComments = await Comment.find({ student: studentId })
       .populate('course')
       .sort({ createdAt: -1 })
       .limit(5);
 
-    //  10. Streaks (consecutive active days)
-    const today = new Date();
-    const pastWeek = new Date(today);
-    pastWeek.setDate(today.getDate() - 7);
-    const recentProgress = await Progress.find({
-      student: studentId,
-      updatedAt: { $gte: pastWeek },
-    }).sort({ updatedAt: -1 });
-
-    const streakDays = new Set(
-      recentProgress.map((p) => new Date(p.updatedAt).toDateString())
-    ).size;
-
-    //  11. Badges (based on points or streaks)
-    const badges = [];
-    if (totalPoints >= 100) badges.push('🏅 Fast Learner');
-    if (streakDays >= 3) badges.push('🔥 3-Day Streak');
-    if (completedLessonsCount >= 20) badges.push('🎓 Course Champion');
-
-    //  Send response
     res.status(200).json({
       totalCourses,
       completedLessons: completedLessonsCount,
-      inProgressCount,
       totalPoints,
       progressData,
-      recentLessons,
+      currentCourse,
       recentCourses,
       recommended,
       recentComments,
-      streakDays,
-      badges,
     });
   } catch (error) {
     console.error('Dashboard error:', error);
-    res.status(500).json({ message: 'Error loading student dashboard', error });
+    res.status(500).json({ message: 'Error loading student dashboard' });
   }
 };

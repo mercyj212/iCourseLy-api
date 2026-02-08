@@ -3,38 +3,24 @@ const cloudinary = require("../config/cloudinary"); // your cloudinary config
 
 exports.uploadAvatar = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
+    const userId = req.user.id;
 
-    const userId = req.user._id; // from authMiddleware
-    if (!userId) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-
-    // Upload to Cloudinary
     const uploaded = await cloudinary.uploader.upload(req.file.path, {
-      folder: "student_avatars",
+      folder: 'avatars',
     });
 
-    // Update user's avatar
     const user = await User.findByIdAndUpdate(
       userId,
-      { profileImage: uploaded.secure_url },
+      { avatar: uploaded.secure_url },
       { new: true }
-    ).select("-password");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    ).select('-password');
 
     res.json({
-      message:"Avatar uploaded Sucessfully",
-      avatarUrl: user.profileImage
+      message: 'Avatar uploaded successfully',
+      avatar: user.avatar,
     });
-  } catch (err) {
-    console.error("uploadAvatar error:", err);
-    res.status(500).json({ message: "Server error" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 

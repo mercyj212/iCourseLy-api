@@ -72,7 +72,7 @@ exports.deleteComment = async (req, res) => {
     if (!comment) return res.status(404).json({ message: 'Comment not found' });
 
     // allow only owner or instructor to delete
-    if (comment.user.toString() !== userId && req.user.role !== 'Instructor') {
+    if (comment.user.toString() !== userId && req.user.role !== 'instructor') {
       return res.status(403).json({ message: 'Not authorized' });
     }
 

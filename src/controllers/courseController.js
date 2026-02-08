@@ -151,27 +151,22 @@ exports.deleteCourse = async (req, res) => {
 
 exports.searchCourses = async (req, res) => {
   try {
-    const query = req.query.q?.trim() || "";
-
+    const query = req.query.q?.trim();
     if (!query) {
-      return res.status(400).json({ message: "Search query is required" });
+      return res.status(400).json({ message: 'Search query is required' });
     }
 
     const results = await Course.find({
       $or: [
-        { title: { $regex: query, $options: "i" } },
-        { description: { $regex: query, $options: "i" } },
-        { tags: { $regex: query, $options: "i" } },
+        { title: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
       ],
-    }).select("title description thumbnail instructor");
+    })
+      .populate('instructorId', 'userName')
+      .select('title description coverImage instructorId');
 
-    if (results.length === 0) {
-      return res.status(404).json({ message: "No courses found matching your search." });
-    }
-
-    res.json({ results });
-  } catch (err) {
-    console.error("Search error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
